@@ -153,6 +153,11 @@ After that, prerendering happens by simply doing:
 (prerenderer/render @js-engine url headers)
 ```
 
+You can pass a map of data to the renderer
+```clojure
+(prerenderer/render @js-engine url headers {:username "test-user"})
+```
+
 where `url` is the URL you are prerendering and `headers` is map of the headers you want the ClojureScript to see
 (important for cookies for example, [altough currently not properly supported](https://github.com/carouselapps/prerenderer/issues/14)).
 If you are using Ring, you can do something such as:
@@ -236,8 +241,13 @@ but I didn't look into it yet.
 (ns projectx.node
   (:require [prerenderer.core :as prerenderer]))
 
-(defn render-and-send [page-path send-to-browser]
-  (send-to-browser (render page-path)))
+(defn render-and-send
+  ([page-path send-to-browser]
+    (send-to-browser (render page-path))
+  ;; if you want to provide a map with data to the rendering function
+  ;; you need to implement a 3-argument version:
+  ([page-path data send-to-browser]
+    (sent-to-browser (render-with-data page-path data)))))
 
 (set! *main-cli-fn* (prerenderer/create render-and-send "ProjectX"))
 ```

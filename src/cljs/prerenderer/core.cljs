@@ -15,6 +15,8 @@
 
 (def cookie-parser (nodejs/require "cookie-parser"))
 
+(def body-parser (nodejs/require "body-parser"))
+
 (def url (nodejs/require "url"))
 
 ; Set an environment that ressembles a browser, with ajax and alert.
@@ -65,9 +67,14 @@
       (aset (.-defaults xmlhttprequest) "port" (:default-ajax-port options))
       (let [app (-> (express)
                     (.use (cookie-parser))
-                    (.get "/" (fn [_request responce] (.send responce "Universal JavaScript engine for server side pre-rendering single page applications.")))
-                    (.get "/render" (fn [request responce]
-                                      (let [send-to-browser (fn [content] (.send responce content))]
-                                        (render-and-send (get-path request) send-to-browser)))))
+                    (.use (.json body-parser))
+                    (.get "/" (fn [_request response] (.send response "Universal JavaScript engine for server side pre-rendering single page applications.")))
+                    (.get "/render" (fn [request response]
+                                      (let [send-to-browser (fn [content] (.send response content))]
+                                        (render-and-send (get-path request) send-to-browser))))
+                    (.post "/render" (fn [request response]
+                                       (let [data (.-body request)
+                                             send-to-browser (fn [content] (.send response content))]
+                                         (render-and-send (get-path request) data send-to-browser)))))
             server (.createServer http app)]
         (.listen server 0 (fn [] (.writeFile fs (:port-file options) (.-port (.address server)))))))))
